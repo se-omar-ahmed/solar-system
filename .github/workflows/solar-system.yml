@@ -30,8 +30,10 @@ jobs:
             - name: Install Dependencies
               run: npm install
             - name: Unit Testing
+              id: unit-testing-step
               run: npm test
             - name: Archive Test Result
+              if: steps.unit-testing-step.outcome == 'failure' || steps.unit-testing-step.outcome == 'success'
               uses: actions/upload-artifact@v4.6.2
               with:
                 name: Mocha-Test-Result-${{matrix.os}}-${{matrix.nodejs_version}}
