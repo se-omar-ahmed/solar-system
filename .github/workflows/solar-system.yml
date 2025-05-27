@@ -23,7 +23,7 @@ jobs:
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
-            - name: Setup NodeJs (v18)
+            - name: Setup NodeJs (v${{matrix.nodejs_version}})
               uses: actions/setup-node@v3
               with:
                 node-version: ${{matrix.nodejs_version}}
