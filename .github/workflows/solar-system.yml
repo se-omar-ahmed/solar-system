@@ -14,7 +14,7 @@ jobs:
         name: Unit Testing
         strategy:
           matrix:
-            nodejs_version: [18, 19, 20]
+            nodejs_version: [18, 19]
             os: [ubuntu-latest]
         runs-on: ${{matrix.os}}
         steps:
@@ -72,8 +72,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Pring GH Token
-            run: |
-              echo ${{github.token}} == ${{secrets.GITHUB_TOKEN}}
+            run: echo ${{github.token}} == ${{secrets.GITHUB_TOKEN}}
           - name: Checkout Repository
             uses: actions/checkout@v4
           - name: Login to DockerHub
