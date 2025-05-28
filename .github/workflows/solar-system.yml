@@ -71,6 +71,10 @@ jobs:
         needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
         steps:
+          - name: Pring GH Token
+            run: |
+              echo ${{github.token}}
+              echo ${{secrets.GITHUB_TOKEN}}
           - name: Checkout Repository
             uses: actions/checkout@v4
           - name: Login to DockerHub
