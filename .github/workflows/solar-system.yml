@@ -73,8 +73,7 @@ jobs:
         steps:
           - name: Pring GH Token
             run: |
-              echo ${{github.token}}
-              echo ${{secrets.GITHUB_TOKEN}}
+              echo ${{github.token}} == ${{secrets.GITHUB_TOKEN}}
           - name: Checkout Repository
             uses: actions/checkout@v4
           - name: Login to DockerHub
