@@ -12,6 +12,15 @@ env:
 jobs:
     unit-testing:
         name: Unit Testing
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            ports:
+              - 27017:27017
+        env:
+          MONGO_URI: 'mongodb://localhost:27017/superData'
+          MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
+          MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
         strategy:
           matrix:
             nodejs_version: [18, 19]
@@ -85,7 +94,7 @@ jobs:
             with:
               registry: ghcr.io
               username: ${{github.repository_owner}}
-              password: ${{github.token}}
+              password: ${{secrets.GITHUB_TOKEN}}
           - name: Build Image
             uses: docker/build-push-action@v4
             with:
