@@ -70,9 +70,9 @@ jobs:
         name: Login to Docker and Build
         needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
+        permissions: 
+          packages: write
         steps:
-          - name: Pring GH Token
-            run: echo $(${{github.token}} == ${{secrets.GITHUB_TOKEN}})
           - name: Checkout Repository
             uses: actions/checkout@v4
           - name: Login to DockerHub
