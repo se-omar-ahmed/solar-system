@@ -82,7 +82,7 @@ jobs:
                 name: code-coverage-result
                 path: coverage
                 retention-days: 5
-    docker:
+    containerize:
         name: Login to Docker and Build
         needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
@@ -131,3 +131,18 @@ jobs:
               tags: |
                 ${{vars.DOCKERHUB_USERNAME}}/solar-system:${{github.sha}}
                 ghcr.io/${{github.repository_owner}}/solar-system:${{github.sha}}
+    deploy-to-dev:
+      needs: containerize
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+          with:
+            version: 'v1.26.0'
+        - name: Fetch Cluster Details
+          run: |
+            kubectl version --short
+            echo '-------------------------------'
+            kubectl get nodes
