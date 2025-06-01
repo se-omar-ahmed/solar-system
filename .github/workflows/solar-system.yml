@@ -7,8 +7,8 @@ on:
             - 'feature/*'
 env:
     MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-    MONGO_USERNAME: ${{vars.MONGO_USERNAME}}
-    MONGO_PASSWORD: ${{secrets.MONGO_PASSWORD}}
+    MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
+    MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 jobs:
     unit-testing:
         name: Unit Testing
@@ -94,29 +94,29 @@ jobs:
           - name: Login to DockerHub
             uses: docker/login-action@v3.4.0
             with:
-              username: ${{vars.DOCKERHUB_USERNAME}}
-              password: ${{secrets.DOCKERHUB_PAT}}
+              username: ${{ vars.DOCKERHUB_USERNAME }}
+              password: ${{ secrets.DOCKERHUB_PAT }}
           - name: Login to GHCR
             uses: docker/login-action@v3.4.0
             with:
               registry: ghcr.io
-              username: ${{github.repository_owner}}
-              password: ${{secrets.GITHUB_TOKEN}}
+              username: ${{ github.repository_owner }}
+              password: ${{ secrets.GITHUB_TOKEN }}
           - name: Build Image
             uses: docker/build-push-action@v4
             with:
               context: .
               push: false
-              tags: ${{vars.DOCKERHUB_USERNAME}}/solar-system:${{github.sha}}
+              tags: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
           - name: Test Image
             run: |
               docker images
               docker run --name solar-system-app -d \
                 -p 3000:3000 \
-                -e MONGO_URI=${{env.MONGO_URI}} \
-                -e MONGO_USERNAME=${{env.MONGO_USERNAME}} \
-                -e MONGO_PASSWORD=${{env.MONGO_PASSWORD}} \
-                ${{vars.DOCKERHUB_USERNAME}}/solar-system:${{github.sha}}
+                -e MONGO_URI=${{ env.MONGO_URI }} \
+                -e MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
+                -e MONGO_PASSWORD=${{ env.MONGO_PASSWORD }} \
+                ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
               
               export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
               echo $IP
@@ -129,8 +129,8 @@ jobs:
               context: .
               push: true
               tags: |
-                ${{vars.DOCKERHUB_USERNAME}}/solar-system:${{github.sha}}
-                ghcr.io/${{github.repository_owner}}/solar-system:${{github.sha}}
+                ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+                ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
     deploy-to-dev:
       name: Deploy Image to Development Environment
       needs: containerize
