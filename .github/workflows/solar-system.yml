@@ -141,7 +141,7 @@ jobs:
         - name: Install kubectl
           uses: azure/setup-kubectl@v3
           with:
-            version: 'v1.26.0'
+            version: 'v1.32.0'
         - name: Setup kubeconfig
           uses: azure/k8s-set-context@v4.0.1
           with:
