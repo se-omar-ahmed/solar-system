@@ -82,8 +82,8 @@ jobs:
                 name: code-coverage-result
                 path: coverage
                 retention-days: 5
-    containerize:
-        name: Containerize and Push to Container Registry
+    build-push-image:
+        name: Build and Push to DockerHub and GHCR
         needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
         permissions: 
