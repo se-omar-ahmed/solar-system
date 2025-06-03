@@ -23,7 +23,7 @@ jobs:
           MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
         strategy:
           matrix:
-            nodejs_version: [18, 19]
+            nodejs_version: [18]
             os: [ubuntu-latest]
         runs-on: ${{matrix.os}}
         steps:
@@ -178,4 +178,4 @@ jobs:
               -o yaml | kubectl apply -f -
         - name: Deploy to Dev Env
           run: |
-              kubectl apply -f kubernetes/development/deployment.yaml kubernetes/development/service.yaml
+              kubectl apply -f kubernetes/development/deployment.yaml -f kubernetes/development/service.yaml
