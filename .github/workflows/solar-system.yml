@@ -178,7 +178,7 @@ jobs:
               -o yaml | kubectl apply -f -
         - name: Deploy to Dev Env
           run: |
-              kubectl apply -f .
+              kubectl apply -f kubernetes/development
     # integration-testing:
     #   name: Development Integration Testing
     #   needs: deploy-to-dev
