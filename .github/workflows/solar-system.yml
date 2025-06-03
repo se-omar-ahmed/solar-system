@@ -135,6 +135,8 @@ jobs:
       name: Deploy Image to Development Environment
       needs: containerize
       runs-on: ubuntu-latest
+      outputs:
+        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
       steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
@@ -154,7 +156,7 @@ jobs:
             kubectl get nodes
         - name: Fetch and Save Ingress IP as a GitHub Variable
           run: |
-            echo "INGRESS_IP=$(kubectl -n default get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+            echo "INGRESS_IP=$(kubectl -n ${{ vars.NAMESPACE }} get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
         - name: Replace Tokens in Manifest Files
           uses: cschleiden/replace-tokens@v1.3
           with:
@@ -179,11 +181,19 @@ jobs:
         - name: Deploy to Dev Env
           run: |
               kubectl apply -f kubernetes/development
-    # integration-testing:
-    #   name: Development Integration Testing
-    #   needs: deploy-to-dev
-    #   runs-on: ubuntu-latest
-    #   steps:
-    #     - name: Test URL Output using curl and jq
-    #       run: |
-    #         echo $URL
+        - name: Fetch Ingress URL
+          id: fetch-ingress-url
+          run: |
+            echo "INGRESS_URL=$(kubectl -n ${{ vars.NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+    integration-testing:
+      name: Development Integration Testing
+      needs: deploy-to-dev
+      runs-on: ubuntu-latest
+      steps:
+        - name: Test URL Output using curl and jq
+          env:
+            INGRESS_URL: ${{ needs.deploy-to-dev.outputs.ingress_url }}
+          run: |
+            echo $INGRESS_URL
+            echo "-------------------------------------------"
+            curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
