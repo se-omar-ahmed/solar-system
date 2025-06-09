@@ -200,3 +200,4 @@ jobs:
             echo $INGRESS_URL
             echo "-------------------------------------------"
             curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
+            
