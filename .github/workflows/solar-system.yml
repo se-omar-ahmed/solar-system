@@ -156,7 +156,7 @@ jobs:
           run: |
             kubectl version
             echo '-------------------------------'
-            kubectl get nodes
+            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
         - name: Fetch and Save Ingress IP as a GitHub Variable
           run: |
             echo "INGRESS_IP=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
