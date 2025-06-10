@@ -1,0 +1,272 @@
+name: Solar System Workflow
+on:
+    workflow_dispatch: 
+    push:
+        branches: 
+            - main
+            - 'feature/*'
+env:
+    MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+    MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
+    MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+jobs:
+    unit-testing:
+        name: Unit Testing
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            ports:
+              - 27017:27017
+        env:
+          MONGO_URI: 'mongodb://localhost:27017/superData'
+          MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
+          MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
+        strategy:
+          matrix:
+            nodejs_version: [18]
+            os: [ubuntu-latest]
+        runs-on: ${{matrix.os}}
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - name: Setup NodeJs (v${{matrix.nodejs_version}})
+              uses: actions/setup-node@v3
+              with:
+                node-version: ${{matrix.nodejs_version}}
+            - name: Cache npm Modules
+              uses: actions/cache@v4
+              with:
+                path: node_modules
+                key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
+            - name: Install Dependencies
+              run: npm install
+            - name: Unit Testing
+              id: unit-testing-step
+              run: npm test
+            - name: Archive Test Result
+              if: always()
+              uses: actions/upload-artifact@v4.6.2
+              with:
+                name: Mocha-Test-Result-${{matrix.os}}-${{matrix.nodejs_version}}
+                path: test-results.xml
+    code-coverage:
+        name: Code Coverage
+        runs-on: ubuntu-latest
+        container:
+          image: node:18
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            options:
+              --name mongodb
+        env:
+          MONGO_URI: 'mongodb://mongodb:27017/superData'
+          MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
+          MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - name: Cache npm Modules
+              uses: actions/cache@v4
+              with:
+                path: node_modules
+                key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
+            - name: Install Dependencies
+              run: npm install
+            - name: Check Code Coverage
+              continue-on-error: true
+              run: npm run coverage
+            - name: Archive Test Result
+              uses: actions/upload-artifact@v4.6.2
+              with:
+                name: code-coverage-result
+                path: coverage
+                retention-days: 5
+    build-push-image:
+        name: Build & Push to DockerHub and GHCR
+        needs: [unit-testing, code-coverage]
+        runs-on: ubuntu-latest
+        permissions: 
+          packages: write
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v4
+          - name: Login to DockerHub
+            uses: docker/login-action@v3.4.0
+            with:
+              username: ${{ vars.DOCKERHUB_USERNAME }}
+              password: ${{ secrets.DOCKERHUB_PAT }}
+          - name: Login to GHCR
+            uses: docker/login-action@v3.4.0
+            with:
+              registry: ghcr.io
+              username: ${{ github.repository_owner }}
+              password: ${{ secrets.GITHUB_TOKEN }}
+          - name: Build Image
+            uses: docker/build-push-action@v4
+            with:
+              context: .
+              push: false
+              tags: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+          - name: Test Image
+            run: |
+              docker images
+              docker run --name solar-system-app -d \
+                -p 3000:3000 \
+                -e MONGO_URI=${{ env.MONGO_URI }} \
+                -e MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
+                -e MONGO_PASSWORD=${{ env.MONGO_PASSWORD }} \
+                ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+              
+              export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+              echo $IP
+
+              echo 'Testing image URL using wget...'
+              wget -q -O - localhost:3000/live | grep live
+          - name: Push Image to DockerHub and GHCR
+            uses: docker/build-push-action@v4
+            with:
+              context: .
+              push: true
+              tags: |
+                ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+                ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+    deploy-to-dev:
+      name: Deploy to dev
+      needs: build-push-image
+      runs-on: ubuntu-latest
+      environment: 
+        name: dev
+        url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      outputs:
+        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+          with:
+            version: 'v1.32.0'
+        - name: Setup kubeconfig
+          uses: azure/k8s-set-context@v4.0.1
+          with:
+            method: kubeconfig
+            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        - name: Fetch Cluster Details
+          run: |
+            kubectl version
+            echo '-------------------------------'
+            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
+        - name: Fetch and Save Ingress IP as a GitHub Variable
+          run: |
+            echo "INGRESS_IP=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+        - name: Replace Tokens in Manifest Files
+          uses: cschleiden/replace-tokens@v1.3
+          with:
+            files: '["kubernetes/development/*.yaml"]'
+          env:
+            NAMESPACE: ${{ vars.LINODE_NAMESPACE }}
+            REPLICAS: ${{ vars.LINODE_REPLICAS }}
+            IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+        - name: Print Manifest Files
+          run: |
+            cat kubernetes/development/*.yaml
+        - name: Create MongoDB Secret
+          run: |
+              kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
+              --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+              --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
+              --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
+              --save-config \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+        - name: Deploy to dev Env
+          run: |
+              kubectl apply -f kubernetes/development
+        - name: Fetch Ingress URL
+          id: fetch-ingress-url
+          run: |
+            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+    dev-integration-testing:
+      name: dev Integration Testing
+      needs: deploy-to-dev
+      runs-on: ubuntu-latest
+      steps:
+        - name: Test URL Output using curl and jq
+          env:
+            INGRESS_URL: ${{ needs.deploy-to-dev.outputs.ingress_url }}
+          run: |
+            echo $INGRESS_URL
+            echo "-------------------------------------------"
+            curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
+    deploy-to-prod:
+      if: github.ref == 'refs/heads/main'
+      name: Deploy to prod
+      needs: build-push-image
+      runs-on: ubuntu-latest
+      environment: 
+        name: prod
+        url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      outputs:
+        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+          with:
+            version: 'v1.32.0'
+        - name: Setup kubeconfig
+          uses: azure/k8s-set-context@v4.0.1
+          with:
+            method: kubeconfig
+            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        - name: Fetch Cluster Details
+          run: |
+            kubectl version
+            echo '-------------------------------'
+            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
+        - name: Fetch and Save Ingress IP as a GitHub Variable
+          run: |
+            echo "INGRESS_IP=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+        - name: Replace Tokens in Manifest Files
+          uses: cschleiden/replace-tokens@v1.3
+          with:
+            files: '["kubernetes/production/*.yaml"]'
+          env:
+            NAMESPACE: ${{ vars.LINODE_NAMESPACE }}
+            REPLICAS: ${{ vars.LINODE_REPLICAS }}
+            IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+        - name: Print Manifest Files
+          run: |
+            cat kubernetes/production/*.yaml
+        - name: Create MongoDB Secret
+          run: |
+              kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
+              --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+              --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
+              --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
+              --save-config \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+        - name: Deploy to prod Env
+          run: |
+              kubectl apply -f kubernetes/production
+        - name: Fetch Ingress URL
+          id: fetch-ingress-url
+          run: |
+            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+    prod-integration-testing:
+      name: prod Integration Testing
+      needs: deploy-to-prod
+      runs-on: ubuntu-latest
+      steps:
+        - name: Test URL Output using curl and jq
+          env:
+            INGRESS_URL: ${{ needs.deploy-to-prod.outputs.ingress_url }}
+          run: |
+            echo $INGRESS_URL
+            echo "-------------------------------------------"
+            curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
