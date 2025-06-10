@@ -187,7 +187,7 @@ jobs:
         - name: Fetch Ingress URL
           id: fetch-ingress-url
           run: |
-            echo "INGRESS_URL=$(kubectl -n ${{ vars.NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
     integration-testing:
       name: Development Integration Testing
       needs: deploy-to-dev
