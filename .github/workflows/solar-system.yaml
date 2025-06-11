@@ -135,60 +135,10 @@ jobs:
       if: contains(github.ref, 'feature/')
       name: Deploy to dev
       needs: build-push-image
-      runs-on: ubuntu-latest
-      environment: 
-        name: dev
-        url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
-      outputs:
-        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
-      steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
-        - name: Install kubectl
-          uses: azure/setup-kubectl@v3
-          with:
-            version: 'v1.32.0'
-        - name: Setup kubeconfig
-          uses: azure/k8s-set-context@v4.0.1
-          with:
-            method: kubeconfig
-            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-        - name: Fetch Cluster Details
-          run: |
-            kubectl version
-            echo '-------------------------------'
-            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
-        - name: Fetch and Save Ingress IP as a GitHub Variable
-          run: |
-            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
-        - name: Replace Tokens in Manifest Files
-          uses: cschleiden/replace-tokens@v1.3
-          with:
-            files: '["kubernetes/development/*.yaml"]'
-          env:
-            NAMESPACE: ${{ vars.LINODE_NAMESPACE }}
-            REPLICAS: ${{ vars.LINODE_REPLICAS }}
-            IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
-            INGRESS_IP: ${{ env.INGRESS_IP }}
-        - name: Print Manifest Files
-          run: |
-            cat kubernetes/development/*.yaml
-        - name: Create MongoDB Secret
-          run: |
-              kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
-              --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
-              --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
-              --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
-              --save-config \
-              --dry-run=client \
-              -o yaml | kubectl apply -f -
-        - name: Deploy to dev Env
-          run: |
-              kubectl apply -f kubernetes/development
-        - name: Fetch Ingress URL
-          id: fetch-ingress-url
-          run: |
-            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+      uses: ./.github/workflows/deploy.yaml
+      secrets: 
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb-password: ${{ secrets.MONGO_PASSWORD  }}
     dev-integration-testing:
       name: dev Integration Testing
       needs: deploy-to-dev
@@ -205,60 +155,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       name: Deploy to prod
       needs: build-push-image
-      runs-on: ubuntu-latest
-      environment: 
-        name: prod
-        url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
-      outputs:
-        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
-      steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
-        - name: Install kubectl
-          uses: azure/setup-kubectl@v3
-          with:
-            version: 'v1.32.0'
-        - name: Setup kubeconfig
-          uses: azure/k8s-set-context@v4.0.1
-          with:
-            method: kubeconfig
-            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-        - name: Fetch Cluster Details
-          run: |
-            kubectl version
-            echo '-------------------------------'
-            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
-        - name: Fetch and Save Ingress IP as a GitHub Variable
-          run: |
-            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
-        - name: Replace Tokens in Manifest Files
-          uses: cschleiden/replace-tokens@v1.3
-          with:
-            files: '["kubernetes/prod/*.yaml"]'
-          env:
-            NAMESPACE: ${{ vars.LINODE_NAMESPACE }}
-            REPLICAS: ${{ vars.LINODE_REPLICAS }}
-            IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
-            INGRESS_IP: ${{ env.INGRESS_IP }}
-        - name: Print Manifest Files
-          run: |
-            cat kubernetes/prod/*.yaml
-        - name: Create MongoDB Secret
-          run: |
-              kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
-              --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
-              --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
-              --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
-              --save-config \
-              --dry-run=client \
-              -o yaml | kubectl apply -f -
-        - name: Deploy to prod Env
-          run: |
-              kubectl apply -f kubernetes/prod
-        - name: Fetch Ingress URL
-          id: fetch-ingress-url
-          run: |
-            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+      uses: ./.github/workflows/deploy.yaml
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod

@@ -1,0 +1,65 @@
+name: Deploy to k8s
+on:
+    workflow_call:
+      secrets:
+        kubeconfig:
+          required: true
+        mongodb-password:
+          required: true
+jobs:
+    deploy:
+      name: Deploy to Environment
+      runs-on: ubuntu-latest
+      environment: 
+        name: prod
+        url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      outputs:
+        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+          with:
+            version: 'v1.32.0'
+        - name: Setup kubeconfig
+          uses: azure/k8s-set-context@v4.0.1
+          with:
+            method: kubeconfig
+            kubeconfig: ${{ secrets.kubeconfig }}
+        - name: Fetch Cluster Details
+          run: |
+            kubectl version
+            echo '-------------------------------'
+            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
+        - name: Fetch and Save Ingress IP as a GitHub Variable
+          run: |
+            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+        - name: Replace Tokens in Manifest Files
+          uses: cschleiden/replace-tokens@v1.3
+          with:
+            files: '["kubernetes/prod/*.yaml"]'
+          env:
+            NAMESPACE: ${{ vars.LINODE_NAMESPACE }}
+            REPLICAS: ${{ vars.LINODE_REPLICAS }}
+            IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+        - name: Print Manifest Files
+          run: |
+            cat kubernetes/prod/*.yaml
+        - name: Create MongoDB Secret
+          run: |
+              kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
+              --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+              --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
+              --from-literal=MONGO_PASSWORD=${{ secrets.mongodb-password }} \
+              --save-config \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+        - name: Deploy to prod Env
+          run: |
+              kubectl apply -f kubernetes/prod
+        - name: Fetch Ingress URL
+          id: fetch-ingress-url
+          run: |
+            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
