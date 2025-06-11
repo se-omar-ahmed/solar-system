@@ -1,11 +1,11 @@
 name: Deploy to k8s
 on:
     workflow_call:
-      secrets:
-        kubeconfig:
-          required: true
-        mongodb-password:
-          required: true
+      # secrets:
+      #   kubeconfig:
+      #     required: true
+      #   mongodb-password:
+      #     required: true
 jobs:
     deploy:
       name: Deploy to Environment
@@ -26,7 +26,7 @@ jobs:
           uses: azure/k8s-set-context@v4.0.1
           with:
             method: kubeconfig
-            kubeconfig: ${{ secrets.kubeconfig }}
+            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         - name: Fetch Cluster Details
           run: |
             kubectl version
@@ -50,9 +50,9 @@ jobs:
         - name: Create MongoDB Secret
           run: |
               kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
-              --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
-              --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
-              --from-literal=MONGO_PASSWORD=${{ secrets.mongodb-password }} \
+              --from-literal=MONGO_URI=${{ env.MONGODB_URI }} \
+              --from-literal=MONGO_USERNAME=${{ vars.MONGODB_USERNAME }} \
+              --from-literal=MONGO_PASSWORD=${{ secrets.MONGODB_PASSWORD }} \
               --save-config \
               --dry-run=client \
               -o yaml | kubectl apply -f -
