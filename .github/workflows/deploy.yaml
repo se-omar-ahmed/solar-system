@@ -1,6 +1,10 @@
 name: Deploy to k8s
 on:
     workflow_call:
+      inputs:
+        environment:
+          required: true
+          type: string
       secrets:
         kubeconfig:
           required: true
@@ -11,13 +15,15 @@ jobs:
       name: Deploy to Environment
       runs-on: ubuntu-latest
       environment: 
-        name: dev
+        name: ${{ inputs.environment }}
         url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
       outputs:
         ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
       steps:
         - name: Print Variables
-          run: echo ${{ vars.LINODE_NAMESPACE }}
+          run: |
+            echo "${{ vars.LINODE_NAMESPACE }}"
+            echo "${{ secrets.MONGODB_PASSWORD }}"
         - name: Checkout Repository
           uses: actions/checkout@v4
         - name: Install kubectl

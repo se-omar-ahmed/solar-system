@@ -129,9 +129,11 @@ jobs:
       name: Deploy to dev
       needs: build-push-image
       uses: ./.github/workflows/deploy.yaml
+      with:
+        environment: dev
       secrets: 
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-      #   mongodb-password: ${{ secrets.MONGO_PASSWORD  }}
+      #   mongodb-password: ${{ secrets.MONGODB_PASSWORD  }}
     dev-integration-testing:
       name: dev Integration Testing
       needs: deploy-to-dev
@@ -149,9 +151,11 @@ jobs:
       name: Deploy to prod
       needs: build-push-image
       uses: ./.github/workflows/deploy.yaml
+      with:
+        environment: dev
       secrets: 
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-      #   mongodb-password: ${{ secrets.MONGO_PASSWORD  }}
+      #   mongodb-password: ${{ secrets.MONGODB_PASSWORD  }}
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod
