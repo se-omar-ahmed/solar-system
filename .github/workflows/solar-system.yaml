@@ -83,7 +83,7 @@ jobs:
                 path: coverage
                 retention-days: 5
     build-push-image:
-        name: Build & Push to DockerHub and GHCR
+        name: Build & Push to GHCR
         needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
         permissions: 
@@ -91,11 +91,6 @@ jobs:
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
-          - name: Login to DockerHub
-            uses: docker/login-action@v3.4.0
-            with:
-              username: ${{ vars.DOCKERHUB_USERNAME }}
-              password: ${{ secrets.DOCKERHUB_PAT }}
           - name: Login to GHCR
             uses: docker/login-action@v3.4.0
             with:
@@ -123,14 +118,12 @@ jobs:
 
               echo 'Testing image URL using wget...'
               wget -q -O - localhost:3000/live | grep live
-          - name: Push Image to DockerHub and GHCR
+          - name: Push Image to GHCR
             uses: docker/build-push-action@v4
             with:
               context: .
               push: true
-              tags: |
-                ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
-                ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+              tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
     deploy-to-dev:
       if: contains(github.ref, 'feature/')
       name: Deploy to dev
