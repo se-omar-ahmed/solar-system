@@ -27,7 +27,7 @@ jobs:
             echo "${{ vars.LINODE_NAMESPACE }}"
             echo "${{ secrets.mongodb-password }}" > text.txt
             ls -l
-            cat text.txt
+            more text.txt
         - name: Checkout Repository
           uses: actions/checkout@v4
         - name: Install kubectl
