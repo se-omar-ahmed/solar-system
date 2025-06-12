@@ -136,9 +136,8 @@ jobs:
       name: Deploy to dev
       needs: build-push-image
       uses: ./.github/workflows/deploy.yaml
-      secrets: inherit
-      # secrets: 
-      #   kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+      secrets: 
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
       #   mongodb-password: ${{ secrets.MONGO_PASSWORD  }}
     dev-integration-testing:
       name: dev Integration Testing

@@ -1,9 +1,9 @@
 name: Deploy to k8s
 on:
     workflow_call:
-      # secrets:
-      #   kubeconfig:
-      #     required: true
+      secrets:
+        kubeconfig:
+          required: true
       #   mongodb-password:
       #     required: true
 jobs:
@@ -52,7 +52,7 @@ jobs:
         - name: Create MongoDB Secret
           run: |
               kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
-              --from-literal=MONGO_URI=${{ env.MONGODB_URI }} \
+              --from-literal=MONGO_URI=${{ vars.MONGODB_URI }} \
               --from-literal=MONGO_USERNAME=${{ vars.MONGODB_USERNAME }} \
               --from-literal=MONGO_PASSWORD=${{ secrets.MONGODB_PASSWORD }} \
               --save-config \
