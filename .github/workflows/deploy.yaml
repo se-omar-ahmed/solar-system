@@ -16,6 +16,8 @@ jobs:
       outputs:
         ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
       steps:
+        - name: Print Variables
+          run: echo ${{ vars.LINODE_NAMESPACE }}
         - name: Checkout Repository
           uses: actions/checkout@v4
         - name: Install kubectl
