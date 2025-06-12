@@ -25,7 +25,8 @@ jobs:
         - name: Print Variables
           run: |
             echo "${{ vars.LINODE_NAMESPACE }}"
-            echo "${{ secrets.mongodb-password }}"
+            echo "${{ secrets.mongodb-password }}" > text.txt
+            cat text.txt
         - name: Checkout Repository
           uses: actions/checkout@v4
         - name: Install kubectl
