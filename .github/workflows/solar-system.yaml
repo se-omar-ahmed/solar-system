@@ -133,6 +133,7 @@ jobs:
         environment: dev
       secrets: 
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
       #   mongodb-password: ${{ secrets.MONGODB_PASSWORD  }}
     dev-integration-testing:
       name: dev Integration Testing
@@ -155,6 +156,7 @@ jobs:
         environment: dev
       secrets: 
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
       #   mongodb-password: ${{ secrets.MONGODB_PASSWORD  }}
     prod-integration-testing:
       name: prod Integration Testing
