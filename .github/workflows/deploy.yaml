@@ -28,7 +28,7 @@ jobs:
           uses: azure/k8s-set-context@v4.0.1
           with:
             method: kubeconfig
-            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+            kubeconfig: ${{ secrets.kubeconfig }}
         - name: Fetch Cluster Details
           run: |
             kubectl version
