@@ -156,8 +156,8 @@ jobs:
       name: Deploy to prod
       needs: build-push-image
       uses: ./.github/workflows/deploy.yaml
-      # secrets: 
-      #   kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+      secrets: 
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
       #   mongodb-password: ${{ secrets.MONGO_PASSWORD  }}
     prod-integration-testing:
       name: prod Integration Testing
