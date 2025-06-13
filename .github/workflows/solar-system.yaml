@@ -126,15 +126,11 @@ jobs:
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
     deploy-to-dev:
       if: contains(github.ref, 'feature/')
-      name: Deploy to dev
       needs: build-push-image
+      name: Deploy to dev
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: dev
-      secrets: 
-        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
-      #   mongodb-password: ${{ secrets.MONGODB_PASSWORD  }}
     dev-integration-testing:
       name: dev Integration Testing
       needs: deploy-to-dev
@@ -149,15 +145,11 @@ jobs:
             curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
     deploy-to-prod:
       if: github.ref == 'refs/heads/main'
-      name: Deploy to prod
       needs: build-push-image
+      name: Deploy to prod
       uses: ./.github/workflows/deploy.yaml
       with:
-        environment: dev
-      secrets: 
-        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
-      #   mongodb-password: ${{ secrets.MONGODB_PASSWORD  }}
+        environment: prod
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod
