@@ -5,13 +5,12 @@ on:
         environment:
           required: true
           type: string
-      # secrets:
-      #   kubeconfig:
-      #     required: true
-      #   mongodb-password:
-      #     required: true
-      #   mongodb-password:
-      #     required: true
+      secrets:
+        kubeconfig:
+          required: true
+        mongodb-password:
+          required: true
+
 jobs:
     deploy:
       runs-on: ubuntu-latest
@@ -24,7 +23,7 @@ jobs:
         - name: Print Variables
           run: |
             echo "${{ vars.LINODE_NAMESPACE }}"
-            echo "${{ secrets.MONGODB_PASSWORD }}" > text.txt
+            echo "${{ secrets.mongodb-password }}" > text.txt
             ls -l
             cat text.txt
         - name: Checkout Repository
@@ -37,7 +36,7 @@ jobs:
           uses: azure/k8s-set-context@v4.0.1
           with:
             method: kubeconfig
-            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+            kubeconfig: ${{ secrets.kubeconfig }}
         - name: Fetch Cluster Details
           run: |
             kubectl version

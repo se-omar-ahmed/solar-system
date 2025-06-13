@@ -131,6 +131,9 @@ jobs:
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: dev
+      secrets:
+        kubeconfig: ${{secrets.LINODE_KUBECONFIG}}
+        mongodb-password: ${{secrets.MONGODB_PASSWORD}}
 
     dev-integration-testing:
       name: dev Integration Testing
@@ -151,6 +154,9 @@ jobs:
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: prod
+      secrets:
+        kubeconfig: ${{secrets.LINODE_KUBECONFIG}}
+        mongodb-password: ${{secrets.MONGODB_PASSWORD}}
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod
