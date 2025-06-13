@@ -27,8 +27,6 @@ jobs:
             os: [ubuntu-latest]
         runs-on: ${{matrix.os}}
         steps:
-            - name: testing
-              run: echo ${{prod.secrets.LINODE_REPLICAS}}
             - name: Checkout Repository
               uses: actions/checkout@v4
             - name: Setup NodeJs (v${{matrix.nodejs_version}})

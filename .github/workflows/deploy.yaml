@@ -24,7 +24,7 @@ jobs:
         - name: Print Variables
           run: |
             echo "${{ vars.LINODE_NAMESPACE }}"
-            echo "${{ secrets.mongodb-password }}" > text.txt
+            echo "${{ secrets.MONGODB_PASSWORD }}" > text.txt
             ls -l
             cat text.txt
         - name: Checkout Repository
@@ -37,7 +37,7 @@ jobs:
           uses: azure/k8s-set-context@v4.0.1
           with:
             method: kubeconfig
-            kubeconfig: ${{ secrets.kubeconfig }}
+            kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         - name: Fetch Cluster Details
           run: |
             kubectl version
