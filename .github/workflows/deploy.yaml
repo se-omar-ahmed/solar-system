@@ -10,7 +10,7 @@ on:
           type: string
         replicas:
           required: true
-          type: number
+          type: string
         mongodb_uri:
           required: true
           type: string
