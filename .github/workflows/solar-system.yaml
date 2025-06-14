@@ -156,14 +156,14 @@ jobs:
       name: Deploy to prod
       uses: ./.github/workflows/deploy.yaml
       with:
-        environment: dev
+        environment: prod
         namespace: ${{ vars.LINODE_NAMESPACE }}
         replicas: ${{ vars.LINODE_REPLICAS }}
         mongodb_uri: ${{ vars.MONGODB_URI }}
         mongodb_username: ${{ vars.MONGODB_USERNAME }}
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
+        mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod
