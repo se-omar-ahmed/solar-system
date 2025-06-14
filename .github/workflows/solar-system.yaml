@@ -55,10 +55,6 @@ jobs:
             image: siddharth67/mongo-db:non-prod
             options:
               --name mongodb
-        env:
-          MONGO_URI: 'mongodb://mongodb:27017/superData'
-          MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
-          MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
