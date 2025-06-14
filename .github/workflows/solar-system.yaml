@@ -55,6 +55,10 @@ jobs:
             image: siddharth67/mongo-db:non-prod
             options:
               --name mongodb
+        env:
+          MONGO_URI: ${{ vars.MONGO_URI }}
+          MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ vars.MONGO_PASSWORD }}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
