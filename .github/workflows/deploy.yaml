@@ -5,10 +5,22 @@ on:
         environment:
           required: true
           type: string
+        namespace:
+          required: true
+          type: string
+        replicas:
+          required: true
+          type: number
+        mongodb_uri:
+          required: true
+          type: string
+        mongodb_username:
+          required: true
+          type: string
       secrets:
         kubeconfig:
           required: true
-        mongodb-password:
+        mongodb_password:
           required: true
 
 jobs:
@@ -20,12 +32,6 @@ jobs:
       outputs:
         ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
       steps:
-        - name: Print Variables
-          run: |
-            echo "${{ vars.LINODE_NAMESPACE }}"
-            echo "${{ secrets.mongodb-password }}" > text.txt
-            ls -l
-            cat text.txt
         - name: Checkout Repository
           uses: actions/checkout@v4
         - name: Install kubectl
@@ -41,35 +47,35 @@ jobs:
           run: |
             kubectl version
             echo '-------------------------------'
-            kubectl -n ${{ vars.LINODE_NAMESPACE }} get nodes
+            kubectl -n ${{ inputs.namespace }} get nodes
         - name: Fetch and Save Ingress IP as a GitHub Variable
           run: |
             echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
         - name: Replace Tokens in Manifest Files
           uses: cschleiden/replace-tokens@v1.3
           with:
-            files: '["kubernetes/development/*.yaml"]'
+            files: '["kubernetes/${{ inputs.environment }}/*.yaml"]'
           env:
-            NAMESPACE: ${{ vars.LINODE_NAMESPACE }}
-            REPLICAS: ${{ vars.LINODE_REPLICAS }}
+            NAMESPACE: ${{ inputs.namespace }}
+            REPLICAS: ${{ inputs.replicas }}
             IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
             INGRESS_IP: ${{ env.INGRESS_IP }}
         - name: Print Manifest Files
           run: |
-            cat kubernetes/development/*.yaml
+            cat kubernetes/${{ inputs.environment }}/*.yaml
         - name: Create MongoDB Secret
           run: |
-              kubectl -n ${{ vars.LINODE_NAMESPACE }} create secret generic mongo-db-creds \
-              --from-literal=MONGO_URI=${{ vars.MONGODB_URI }} \
-              --from-literal=MONGO_USERNAME=${{ vars.MONGODB_USERNAME }} \
-              --from-literal=MONGO_PASSWORD=${{ secrets.mongodb-password }} \
+              kubectl -n ${{ inputs.namespace }} create secret generic mongo-db-creds \
+              --from-literal=MONGO_URI=${{ inputs.mongodb_uri }} \
+              --from-literal=MONGO_USERNAME=${{ inputs.mongodb_username }} \
+              --from-literal=MONGO_PASSWORD=${{ secrets.mongodb_password }} \
               --save-config \
               --dry-run=client \
               -o yaml | kubectl apply -f -
         - name: Deploy to dev Env
           run: |
-              kubectl apply -f kubernetes/development
+              kubectl apply -f kubernetes/${{ inputs.environment }}
         - name: Fetch Ingress URL
           id: fetch-ingress-url
           run: |
-            echo "INGRESS_URL=$(kubectl -n ${{ vars.LINODE_NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
+            echo "INGRESS_URL=$(kubectl -n ${{ inputs.namespace }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"

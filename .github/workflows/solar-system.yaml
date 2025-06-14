@@ -131,10 +131,13 @@ jobs:
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: dev
+        namespace: ${{ vars.LINODE_NAMESPACE }}
+        replicas: ${{ vars.LINODE_REPLICAS }}
+        mongodb_uri: ${{ vars.MONGODB_URI }}
+        mongodb_username: ${{ vars.MONGODB_USERNAME }}
       secrets:
-        kubeconfig: ${{secrets.LINODE_KUBECONFIG}}
-        mongodb-password: ${{secrets.MONGODB_PASSWORD}}
-
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
     dev-integration-testing:
       name: dev Integration Testing
       needs: deploy-to-dev
@@ -153,10 +156,14 @@ jobs:
       name: Deploy to prod
       uses: ./.github/workflows/deploy.yaml
       with:
-        environment: prod
+        environment: dev
+        namespace: ${{ vars.LINODE_NAMESPACE }}
+        replicas: ${{ vars.LINODE_REPLICAS }}
+        mongodb_uri: ${{ vars.MONGODB_URI }}
+        mongodb_username: ${{ vars.MONGODB_USERNAME }}
       secrets:
-        kubeconfig: ${{secrets.LINODE_KUBECONFIG}}
-        mongodb-password: ${{secrets.MONGODB_PASSWORD}}
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod
