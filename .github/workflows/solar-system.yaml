@@ -49,9 +49,7 @@ jobs:
         name: Code Coverage
         runs-on: ubuntu-latest
         env:
-          MONGO_URI: 'mongodb://localhost:27017/superData'
-          MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
-          MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
+          MONGO_URI: 'mongodb://mongodb:27017/superData'
         container:
           image: node:18
         services:
