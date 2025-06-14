@@ -6,9 +6,9 @@ on:
             - main
             - 'feature/*'
 env:
-    MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-    MONGO_USERNAME: ${{ vars.MONGODB_USERNAME }}
-    MONGO_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+  MONGO_URI: 'mongodb://localhost:27017/superData'
+  MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
+  MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
 jobs:
     unit-testing:
         name: Unit Testing
@@ -17,10 +17,6 @@ jobs:
             image: siddharth67/mongo-db:non-prod
             ports:
               - 27017:27017
-        env:
-          MONGO_URI: 'mongodb://localhost:27017/superData'
-          MONGO_USERNAME: ${{vars.MONGODB_SERVICE_USERNAME}}
-          MONGO_PASSWORD: ${{secrets.MONGODB_SERVICE_PASSWORD}}
         strategy:
           matrix:
             nodejs_version: [18]
@@ -104,6 +100,10 @@ jobs:
               push: false
               tags: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
           - name: Test Image
+            env:
+              MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+              MONGO_USERNAME: ${{ vars.MONGODB_USERNAME }}
+              MONGO_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
             run: |
               docker images
               docker run --name solar-system-app -d \
