@@ -137,7 +137,7 @@ jobs:
         mongodb_username: ${{ vars.MONGODB_USERNAME }}
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
-        mongodb-password: ${{ secrets.MONGODB_PASSWORD }}
+        mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
     dev-integration-testing:
       name: dev Integration Testing
       needs: deploy-to-dev
