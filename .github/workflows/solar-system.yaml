@@ -119,7 +119,7 @@ jobs:
 
               echo 'Testing image URL using wget...'
               wget -q -O - localhost:3000/live | grep live
-              wget -q -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
+              wget -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
           - name: Push Image to GHCR
             uses: docker/build-push-action@v4
             with:
