@@ -83,7 +83,7 @@ jobs:
         permissions: 
           packages: write
         env:
-          MONGO_URI: 'mongodb://localhost:27017/superData'
+          MONGO_URI: 'mongodb://mongodb:27017/superData'
         services:
           mongodb:
             image: siddharth67/mongo-db:non-prod
@@ -102,7 +102,6 @@ jobs:
             run: echo "GITHUB_NETWORK=$(docker network ls --filter name=github --format "{{.Name}}")" >> $GITHUB_ENV
           - name: Test Image
             run: |
-              docker images
               docker run --name solar-system-app -d \
                 --network ${{ env.GITHUB_NETWORK }} \
                 -p 3000:3000 \
