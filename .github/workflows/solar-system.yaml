@@ -87,8 +87,6 @@ jobs:
         services:
           mongodb:
             image: siddharth67/mongo-db:non-prod
-            ports:
-              - 27017:27017
             options:
               --name mongodb
         steps:
@@ -101,11 +99,12 @@ jobs:
               push: false
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
           - name: Fetch services containers network
-            run: docker network ls
+            run: echo "GITHUB_NETWORK=$(docker network ls --filter name=github --format "{{.Name}}")" >> $GITHUB_ENV
           - name: Test Image
             run: |
               docker images
               docker run --name solar-system-app -d \
+                --network ${{ env.GITHUB_NETWORK }}
                 -p 3000:3000 \
                 -e MONGO_URI=${{ env.MONGO_URI }} \
                 -e MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
