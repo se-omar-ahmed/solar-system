@@ -101,7 +101,7 @@ jobs:
               push: false
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
           - name: Fetch services containers network
-            run: echo $(docker network ls --filter name=github)
+            run: docker network ls
           - name: Test Image
             run: |
               docker images
@@ -119,7 +119,7 @@ jobs:
               docker logs solar-system-app
               echo 'Testing image URL using wget...'
               # wget -O - localhost:3000/live | grep live
-              wget -d -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet || true
+              wget -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
               docker logs solar-system-app
               docker ps
           - name: Login to GHCR
