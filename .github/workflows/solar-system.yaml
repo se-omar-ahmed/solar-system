@@ -124,6 +124,7 @@ jobs:
               # wget -O - localhost:3000/live | grep live
               wget -d -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet || true
               docker logs solar-system-app
+              docker ps
           - name: Push Image to GHCR
             uses: docker/build-push-action@v4
             with:
