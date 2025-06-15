@@ -109,16 +109,9 @@ jobs:
                 -e MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
                 -e MONGO_PASSWORD=${{ env.MONGO_PASSWORD }} \
                 ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
-              
-              # export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
-              # echo $IP
-
-              docker logs solar-system-app
               echo 'Testing image URL using wget...'
-              # wget -O - localhost:3000/live | grep live
-              wget -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet || true
-              docker logs solar-system-app
-              docker ps
+              wget -qO - localhost:3000/live | grep live
+              wget -qO - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
           - name: Login to GHCR
             uses: docker/login-action@v3.4.0
             with:
