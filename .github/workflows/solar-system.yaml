@@ -108,6 +108,7 @@ jobs:
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
           - name: Test Image
             run: |
+              docker logs mongodb
               docker images
               docker run --name solar-system-app -d \
                 -p 3000:3000 \
