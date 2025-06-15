@@ -119,7 +119,6 @@ jobs:
               
               export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}' solar-system-app)
               echo $IP
-              sleep 15
               docker logs solar-system-app
               echo 'Testing image URL using wget...'
               # wget -O - localhost:3000/live | grep live
