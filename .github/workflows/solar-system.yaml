@@ -119,12 +119,12 @@ jobs:
               
               export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
               echo $IP
-
+              docker logs solar-system-app
               echo 'Testing image URL using wget...'
               # wget -O - localhost:3000/live | grep live
               docker network ls
               wget -d -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet || true
-              docker logs solar-system-app
+              
           - name: Push Image to GHCR
             uses: docker/build-push-action@v4
             with:
