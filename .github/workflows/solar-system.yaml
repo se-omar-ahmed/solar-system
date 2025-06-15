@@ -94,18 +94,14 @@ jobs:
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
-          - name: Login to GHCR
-            uses: docker/login-action@v3.4.0
-            with:
-              registry: ghcr.io
-              username: ${{ github.repository_owner }}
-              password: ${{ secrets.GITHUB_TOKEN }}
           - name: Build Image
             uses: docker/build-push-action@v4
             with:
               context: .
               push: false
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+          - name: Fetch services containers network
+            run: echo $(docker network ls --filter name=github)
           - name: Test Image
             run: |
               docker images
@@ -119,7 +115,6 @@ jobs:
               # export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
               # echo $IP
               docker inspect --format '{{range $k, $v := .NetworkSettings.Networks}}{{println $k}}{{end}}' solar-system-app
-              docker inspect --format '{{range $k, $v := .NetworkSettings.Networks}}{{println $k}}{{end}}' mongodb
 
               docker logs solar-system-app
               echo 'Testing image URL using wget...'
@@ -127,6 +122,12 @@ jobs:
               wget -d -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet || true
               docker logs solar-system-app
               docker ps
+          - name: Login to GHCR
+            uses: docker/login-action@v3.4.0
+            with:
+              registry: ghcr.io
+              username: ${{ github.repository_owner }}
+              password: ${{ secrets.GITHUB_TOKEN }}
           - name: Push Image to GHCR
             uses: docker/build-push-action@v4
             with:
