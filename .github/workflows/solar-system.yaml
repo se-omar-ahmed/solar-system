@@ -91,6 +91,7 @@ jobs:
               - 27017:27017
             options:
               --name mongodb
+              --network bridge
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
