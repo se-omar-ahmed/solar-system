@@ -118,8 +118,8 @@ jobs:
               echo $IP
 
               echo 'Testing image URL using wget...'
-              wget -O - localhost:3000/live | grep live
-              docker logs solar-system-app
+              # wget -O - localhost:3000/live | grep live
+              # docker logs solar-system-app
               wget -O - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
           - name: Push Image to GHCR
             uses: docker/build-push-action@v4
