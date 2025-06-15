@@ -7,7 +7,7 @@ on:
             - 'feature/*'
 env:
   MONGO_URI: 'mongodb://localhost:27017/superData'
-  MONGO_USERNAME: ${{ vars.MONGODB_SERVICE_USERNAME }}
+  MONGO_USERNAME: omar
   MONGO_PASSWORD: ${{ secrets.MONGODB_SERVICE_PASSWORD }}
 jobs:
     # unit-testing:
