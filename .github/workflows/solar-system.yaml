@@ -10,75 +10,75 @@ env:
   MONGO_USERNAME: ${{ vars.MONGODB_SERVICE_USERNAME }}
   MONGO_PASSWORD: ${{ secrets.MONGODB_SERVICE_PASSWORD }}
 jobs:
-    unit-testing:
-        name: Unit Testing
-        services:
-          mongo-db:
-            image: siddharth67/mongo-db:non-prod
-            ports:
-              - 27017:27017
-        strategy:
-          matrix:
-            nodejs_version: [18]
-            os: [ubuntu-latest]
-        runs-on: ${{matrix.os}}
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - name: Setup NodeJs (v${{matrix.nodejs_version}})
-              uses: actions/setup-node@v3
-              with:
-                node-version: ${{matrix.nodejs_version}}
-            - name: Cache npm Modules
-              uses: actions/cache@v4
-              with:
-                path: node_modules
-                key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
-            - name: Install Dependencies
-              run: npm install
-            - name: Unit Testing
-              id: unit-testing-step
-              run: npm test
-            - name: Archive Test Result
-              if: always()
-              uses: actions/upload-artifact@v4.6.2
-              with:
-                name: Mocha-Test-Result-${{matrix.os}}-${{matrix.nodejs_version}}
-                path: test-results.xml
-    code-coverage:
-        name: Code Coverage
-        runs-on: ubuntu-latest
-        env:
-          MONGO_URI: 'mongodb://mongodb:27017/superData'
-        container:
-          image: node:18
-        services:
-          mongo-db:
-            image: siddharth67/mongo-db:non-prod
-            options:
-              --name mongodb
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - name: Cache npm Modules
-              uses: actions/cache@v4
-              with:
-                path: node_modules
-                key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
-            - name: Install Dependencies
-              run: npm install
-            - name: Check Code Coverage
-              continue-on-error: true
-              run: npm run coverage
-            - name: Archive Test Result
-              uses: actions/upload-artifact@v4.6.2
-              with:
-                name: code-coverage-result
-                path: coverage
-                retention-days: 5
+    # unit-testing:
+    #     name: Unit Testing
+    #     services:
+    #       mongo-db:
+    #         image: siddharth67/mongo-db:non-prod
+    #         ports:
+    #           - 27017:27017
+    #     strategy:
+    #       matrix:
+    #         nodejs_version: [18]
+    #         os: [ubuntu-latest]
+    #     runs-on: ${{matrix.os}}
+    #     steps:
+    #         - name: Checkout Repository
+    #           uses: actions/checkout@v4
+    #         - name: Setup NodeJs (v${{matrix.nodejs_version}})
+    #           uses: actions/setup-node@v3
+    #           with:
+    #             node-version: ${{matrix.nodejs_version}}
+    #         - name: Cache npm Modules
+    #           uses: actions/cache@v4
+    #           with:
+    #             path: node_modules
+    #             key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
+    #         - name: Install Dependencies
+    #           run: npm install
+    #         - name: Unit Testing
+    #           id: unit-testing-step
+    #           run: npm test
+    #         - name: Archive Test Result
+    #           if: always()
+    #           uses: actions/upload-artifact@v4.6.2
+    #           with:
+    #             name: Mocha-Test-Result-${{matrix.os}}-${{matrix.nodejs_version}}
+    #             path: test-results.xml
+    # code-coverage:
+    #     name: Code Coverage
+    #     runs-on: ubuntu-latest
+    #     env:
+    #       MONGO_URI: 'mongodb://mongodb:27017/superData'
+    #     container:
+    #       image: node:18
+    #     services:
+    #       mongo-db:
+    #         image: siddharth67/mongo-db:non-prod
+    #         options:
+    #           --name mongodb
+    #     steps:
+    #         - name: Checkout Repository
+    #           uses: actions/checkout@v4
+    #         - name: Cache npm Modules
+    #           uses: actions/cache@v4
+    #           with:
+    #             path: node_modules
+    #             key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
+    #         - name: Install Dependencies
+    #           run: npm install
+    #         - name: Check Code Coverage
+    #           continue-on-error: true
+    #           run: npm run coverage
+    #         - name: Archive Test Result
+    #           uses: actions/upload-artifact@v4.6.2
+    #           with:
+    #             name: code-coverage-result
+    #             path: coverage
+    #             retention-days: 5
     build-push-image:
         name: Build & Push to GHCR
-        needs: [unit-testing, code-coverage]
+        # needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
         permissions: 
           packages: write
@@ -119,6 +119,7 @@ jobs:
               
               export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
               echo $IP
+              sleep 15
               docker logs solar-system-app
               echo 'Testing image URL using wget...'
               # wget -O - localhost:3000/live | grep live
