@@ -85,13 +85,10 @@ jobs:
         env:
           MONGO_URI: 'mongodb://localhost:27017/superData'
         services:
-          mongo-db:
+          mongodb:
             image: siddharth67/mongo-db:non-prod
             ports:
               - 27017:27017
-            options:
-              --name mongodb
-              --network bridge
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
