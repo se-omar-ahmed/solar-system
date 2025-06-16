@@ -96,6 +96,7 @@ jobs:
             mkdir reports-${{ github.sha }}
             mv cobertura-coverage.xml reports-${{ github.sha }}
             mv test-results.xml reports-${{ github.sha }}
+            ls -l
             ls -ltr reports-${{ github.sha }}
         - name: Setup Linode CLI
           uses: linode/action-linode-cli@v1.1.0
