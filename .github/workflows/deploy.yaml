@@ -16,6 +16,9 @@ on:
           required: true
         mongodb_password:
           required: true
+      outputs:
+        ingress_url: 
+          value: ${{ jobs.deploy.outputs.ingress_url }}
 
 jobs:
     deploy:
