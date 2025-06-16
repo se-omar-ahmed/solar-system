@@ -101,6 +101,8 @@ jobs:
           uses: linode/action-linode-cli@v1.1.0
           with:
             token: ${{ secrets.LINODE_TOKEN }}
+        - name: Install boto3
+          run: pip3 install boto3
         - name: Upload Reports
           run: |
             linode-cli obj put --acl-public reports-${{ github.sha }} reports-${{ github.sha }}
