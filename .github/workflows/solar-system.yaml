@@ -132,7 +132,7 @@ jobs:
       with:
         environment: linode_dev
         manifests_path: kubernetes/dev
-        k8s_version: 'v1.32.0'
+        kubectl_version: 'v1.32.0'
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
@@ -156,7 +156,7 @@ jobs:
       with:
         environment: linode_prod
         manifests_path: kubernetes/prod
-        k8s_version: 'v1.32.0'
+        kubectl_version: 'v1.32.0'
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         mongodb_password: ${{ secrets.MONGODB_PASSWORD }}

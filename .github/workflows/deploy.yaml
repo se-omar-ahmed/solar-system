@@ -8,7 +8,7 @@ on:
         manifests_path:
           required: true
           type: string
-        k8s_version:
+        kubectl_version:
           required: true
           type: string
       secrets:
@@ -31,7 +31,7 @@ jobs:
         - name: Install kubectl
           uses: azure/setup-kubectl@v3
           with:
-            version: ${{ inputs.k8s_version }}
+            version: ${{ inputs.kubectl_version }}
         - name: Setup kubeconfig
           uses: azure/k8s-set-context@v4.0.1
           with:
