@@ -131,6 +131,7 @@ jobs:
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: linode_dev
+        manifests_path: kubernetes/dev
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
@@ -153,6 +154,7 @@ jobs:
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: linode_prod
+        manifests_path: kubernetes/prod
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
