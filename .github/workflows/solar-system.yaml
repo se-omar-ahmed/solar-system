@@ -21,19 +21,19 @@ jobs:
           matrix:
             nodejs_version: [18]
             os: [ubuntu-latest]
-        runs-on: ${{matrix.os}}
+        runs-on: ${{ matrix.os }}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
-            - name: Setup NodeJs (v${{matrix.nodejs_version}})
+            - name: Setup NodeJs (v${{ matrix.nodejs_version }})
               uses: actions/setup-node@v3
               with:
-                node-version: ${{matrix.nodejs_version}}
+                node-version: ${{ matrix.nodejs_version }}
             - name: Cache npm Modules
               uses: actions/cache@v4
               with:
                 path: node_modules
-                key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
+                key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - name: Install Dependencies
               run: npm install
             - name: Unit Testing
@@ -43,7 +43,7 @@ jobs:
               if: always()
               uses: actions/upload-artifact@v4.6.2
               with:
-                name: Mocha-Test-Result-${{matrix.os}}-${{matrix.nodejs_version}}
+                name: Mocha-Test-Result-${{ matrix.os }}-${{ matrix.nodejs_version }}
                 path: test-results.xml
     code-coverage:
         name: Code Coverage
@@ -64,7 +64,7 @@ jobs:
               uses: actions/cache@v4
               with:
                 path: node_modules
-                key: ${{runner.os}}-node-modules-${{hashFiles('package-lock.json')}}
+                key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
             - name: Install Dependencies
               run: npm install
             - name: Check Code Coverage
