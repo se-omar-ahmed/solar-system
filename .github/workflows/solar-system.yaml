@@ -142,7 +142,6 @@ jobs:
       uses: ./.github/workflows/integeration-testing.yaml
       with:
         ingress_url: ${{ needs.deploy-to-dev.outputs.ingress_url }}
-
     deploy-to-prod:
       if: github.ref == 'refs/heads/main'
       needs: build-push-image
