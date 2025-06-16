@@ -83,11 +83,11 @@ jobs:
       continue-on-error: true
       steps:
         - name: Download Mocha Test Artifact
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4.3.0
           with:
             name: mocha-test-result-${{ matrix.os }}-${{ matrix.nodejs_version }}
         - name: Download Code Coverage Artifact
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4.3.0
           with:
             name: code-coverage-result
         - name: Combine Results in One Folder
