@@ -18,4 +18,4 @@ jobs:
             echo $INGRESS_URL
             echo "-------------------------------------------"
             curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
-            wget -dO - --header="Content-Type: application/json" --post-data='{"id":"2"}' https://$INGRESS_URL/planet
+            wget -dO - --header="Content-Type: application/json" --post-data='{"id":"2"}' --no-check-certificate https://$INGRESS_URL/planet
