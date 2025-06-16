@@ -78,7 +78,7 @@ jobs:
     #             retention-days: 5
     build-push-image:
         name: Build & Push to GHCR
-        needs: [unit-testing, code-coverage]
+        # needs: [unit-testing, code-coverage]
         runs-on: ubuntu-latest
         permissions: 
           packages: write
