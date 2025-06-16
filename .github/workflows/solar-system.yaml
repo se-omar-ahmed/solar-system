@@ -150,7 +150,7 @@ jobs:
     deploy-to-prod:
       if: github.ref == 'refs/heads/main'
       needs: build-push-image
-      name: Deploy to prod
+      name: Deploy to Linode's prod
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: linode_prod
