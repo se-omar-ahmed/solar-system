@@ -8,6 +8,9 @@ on:
         manifests_path:
           required: true
           type: string
+        k8s_version:
+          required: true
+          type: string
       secrets:
         kubeconfig:
           required: true
@@ -28,7 +31,7 @@ jobs:
         - name: Install kubectl
           uses: azure/setup-kubectl@v3
           with:
-            version: 'v1.32.0'
+            version: ${{ inputs.k8s_version }}
         - name: Setup kubeconfig
           uses: azure/k8s-set-context@v4.0.1
           with:
@@ -38,7 +41,7 @@ jobs:
           run: |
             kubectl version
             echo '-------------------------------'
-            kubectl -n ${{ vars.NAMESPACE }} get nodes
+            kubectl -n ${{ vars.NAMESPACE }} get pods
         - name: Fetch and Save Ingress IP as a GitHub Variable
           run: |
             echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
