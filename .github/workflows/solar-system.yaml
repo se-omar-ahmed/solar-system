@@ -110,6 +110,7 @@ jobs:
             LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
             LINODE_OBJ_CLUSTER: 'ap-south-1'
           run: |
+            pwd
             linode-cli obj --cluster ${{ env.LINODE_OBJ_CLUSTER }} put --acl-public ./reports-${{ github.sha }}/ solar-system-reports/
     build-push-image:
       name: Build & Push to GHCR
