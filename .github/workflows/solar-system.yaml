@@ -107,8 +107,9 @@ jobs:
           env:
             LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
             LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+            LINODE_OBJ_CLUSTER: 'ap-south-1'
           run: |
-            linode-cli obj put --acl-public reports-${{ github.sha }} reports-${{ github.sha }}
+            linode-cli obj --cluster ${{ env.LINODE_OBJ_CLUSTER }} put --acl-public reports-${{ github.sha }} reports-${{ github.sha }}
     build-push-image:
       name: Build & Push to GHCR
       needs: [unit-testing, code-coverage]
