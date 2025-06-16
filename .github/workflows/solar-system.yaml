@@ -100,7 +100,7 @@ jobs:
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
           - name: Fetch Github Docker Network
             run: echo "GITHUB_NETWORK=$(docker network ls --filter name=github --format "{{.Name}}")" >> $GITHUB_ENV
-          - name: Test Image
+          - name: Run Image
             run: |
               docker run --name solar-system-app -d \
                 --network ${{ env.GITHUB_NETWORK }} \
@@ -109,9 +109,13 @@ jobs:
                 -e MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
                 -e MONGO_PASSWORD=${{ env.MONGO_PASSWORD }} \
                 ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+          - name: Test Image
+            run: |
               echo 'Testing image URL using wget...'
               wget -qO - localhost:3000/live | grep live
               wget -qO - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
+          - name: Stop Image
+            run: docker stop solar-system-app
           - name: Login to GHCR
             uses: docker/login-action@v3.4.0
             with:
