@@ -104,6 +104,9 @@ jobs:
         - name: Install boto3
           run: pip3 install boto3
         - name: Upload Reports
+          env:
+            LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
+            LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
           run: |
             linode-cli obj put --acl-public reports-${{ github.sha }} reports-${{ github.sha }}
     build-push-image:
