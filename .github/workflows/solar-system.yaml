@@ -97,6 +97,13 @@ jobs:
             mv cobertura-coverage.xml reports-${{ github.sha }}
             mv test-results.xml reports-${{ github.sha }}
             ls -ltr reports-${{ github.sha }}
+        - name: Setup Linode CLI
+          uses: linode/action-linode-cli@v1.1.0
+          with:
+            token: ${{ secrets.LINODE_TOKEN }}
+        - name: Upload Reports
+          run: |
+            linode-cli obj put --acl-public reports-${{ github.sha }} reports-${{ github.sha }}
     build-push-image:
       name: Build & Push to GHCR
       needs: [unit-testing, code-coverage]
