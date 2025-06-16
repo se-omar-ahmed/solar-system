@@ -139,15 +139,10 @@ jobs:
     dev-integration-testing:
       name: dev Integration Testing
       needs: deploy-to-dev
-      runs-on: ubuntu-latest
-      steps:
-        - name: Test URL Output using curl and jq
-          env:
-            INGRESS_URL: ${{ needs.deploy-to-dev.outputs.ingress_url }}
-          run: |
-            echo $INGRESS_URL
-            echo "-------------------------------------------"
-            curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
+      uses: ./.github/workflows/integeration-testing.yaml
+      with:
+        ingress_url: ${{ needs.deploy-to-prod.outputs.ingress_url }}
+
     deploy-to-prod:
       if: github.ref == 'refs/heads/main'
       needs: build-push-image
@@ -163,12 +158,6 @@ jobs:
     prod-integration-testing:
       name: prod Integration Testing
       needs: deploy-to-prod
-      runs-on: ubuntu-latest
-      steps:
-        - name: Test URL Output using curl and jq
-          env:
-            INGRESS_URL: ${{ needs.deploy-to-prod.outputs.ingress_url }}
-          run: |
-            echo $INGRESS_URL
-            echo "-------------------------------------------"
-            curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
+      uses: ./.github/workflows/integeration-testing.yaml
+      with:
+        ingress_url: ${{ needs.deploy-to-prod.outputs.ingress_url }}
