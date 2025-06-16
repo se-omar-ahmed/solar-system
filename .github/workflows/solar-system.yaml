@@ -127,14 +127,10 @@ jobs:
     deploy-to-dev:
       if: contains(github.ref, 'feature/')
       needs: [build-push-image]
-      name: Deploy to dev
+      name: Deploy to Linode's dev
       uses: ./.github/workflows/deploy.yaml
       with:
-        environment: dev
-        namespace: ${{ vars.DOCKERHUB_USERNAME }}
-        replicas: ${{ vars.LINODE_REPLICAS }}
-        mongodb_uri: ${{ vars.MONGODB_URI }}
-        mongodb_username: ${{ vars.MONGODB_USERNAME }}
+        environment: linode_dev
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
@@ -156,11 +152,7 @@ jobs:
       name: Deploy to prod
       uses: ./.github/workflows/deploy.yaml
       with:
-        environment: prod
-        namespace: ${{ vars.LINODE_NAMESPACE }}
-        replicas: ${{ vars.LINODE_REPLICAS }}
-        mongodb_uri: ${{ vars.MONGODB_URI }}
-        mongodb_username: ${{ vars.MONGODB_USERNAME }}
+        environment: linode_prod
       secrets:
         kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
         mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
