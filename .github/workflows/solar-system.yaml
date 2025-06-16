@@ -141,7 +141,7 @@ jobs:
       needs: deploy-to-dev
       uses: ./.github/workflows/integeration-testing.yaml
       with:
-        ingress_url: ${{ needs.deploy-to-prod.outputs.ingress_url }}
+        ingress_url: ${{ needs.deploy-to-dev.outputs.ingress_url }}
 
     deploy-to-prod:
       if: github.ref == 'refs/heads/main'
