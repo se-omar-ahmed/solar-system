@@ -124,15 +124,6 @@ jobs:
               context: .
               push: true
               tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
-    expose-vars:
-      name: Expose vars as Outputs
-      runs-on: ubuntu-latest
-      outputs:
-        namespace: ${{ vars.LINODE_NAMESPACE }}
-      steps:
-        - name: Exposing vars
-          run: echo "Exposing vars..."
-
     deploy-to-dev:
       if: contains(github.ref, 'feature/')
       needs: [build-push-image, expose-vars]
@@ -140,7 +131,7 @@ jobs:
       uses: ./.github/workflows/deploy.yaml
       with:
         environment: dev
-        namespace: ${{ needs.expose-vars.outputs.namespace }}
+        namespace: ${{ vars.DOCKERHUB_USERNAME }}
         replicas: ${{ vars.LINODE_REPLICAS }}
         mongodb_uri: ${{ vars.MONGODB_URI }}
         mongodb_username: ${{ vars.MONGODB_USERNAME }}
