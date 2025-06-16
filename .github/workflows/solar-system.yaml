@@ -43,7 +43,7 @@ jobs:
               if: always()
               uses: actions/upload-artifact@v4.6.2
               with:
-                name: mocha-test-result-${{ matrix.os }}-${{ matrix.nodejs_version }}
+                name: mocha-test-result
                 path: test-results.xml
     code-coverage:
         name: Code Coverage
