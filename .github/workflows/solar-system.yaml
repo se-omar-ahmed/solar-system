@@ -96,6 +96,7 @@ jobs:
             mkdir reports-${{ github.sha }}
             mv cobertura-coverage.xml reports-${{ github.sha }}
             mv test-results.xml reports-${{ github.sha }}
+            pwd
             ls -l
             ls -ltr reports-${{ github.sha }}
         - name: Setup Linode CLI
@@ -111,7 +112,7 @@ jobs:
             LINODE_OBJ_CLUSTER: 'ap-south-1'
           run: |
             pwd
-            linode-cli obj --cluster ${{ env.LINODE_OBJ_CLUSTER }} put --acl-public ./reports-${{ github.sha }}/ solar-system-reports/
+            linode-cli obj --cluster ${{ env.LINODE_OBJ_CLUSTER }} put --acl-public ./reports-${{ github.sha }}/test-results.xml solar-system-reports/
     build-push-image:
       name: Build & Push to GHCR
       needs: [unit-testing, code-coverage]
