@@ -5,18 +5,6 @@ on:
         environment:
           required: true
           type: string
-        namespace:
-          required: true
-          type: string
-        replicas:
-          required: true
-          type: string
-        mongodb_uri:
-          required: true
-          type: string
-        mongodb_username:
-          required: true
-          type: string
       secrets:
         kubeconfig:
           required: true
