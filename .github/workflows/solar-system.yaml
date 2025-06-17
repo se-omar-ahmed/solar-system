@@ -19,7 +19,7 @@ jobs:
               - 27017:27017
         strategy:
           matrix:
-            nodejs_version: [18, 20]
+            nodejs_version: [18]
             os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
@@ -30,7 +30,7 @@ jobs:
               with:
                 node-version: ${{ matrix.nodejs_version }}
             - name: Install and Cache NPM Packages
-              uses: ./.github/workflows/actions/npm-action
+              uses: ./.github/workflows/actions/install-cache-npm
               with:
                 path: node_modules
             - name: Unit Testing
@@ -58,7 +58,7 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
             - name: Install and Cache NPM Packages
-              uses: ./.github/workflows/actions/npm-action
+              uses: ./.github/workflows/actions/install-cache-npm
               with:
                 path: node_modules
             - name: Check Code Coverage
