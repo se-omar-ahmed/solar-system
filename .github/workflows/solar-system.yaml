@@ -19,7 +19,7 @@ jobs:
               - 27017:27017
         strategy:
           matrix:
-            nodejs_version: [18]
+            nodejs_version: [18, 20]
             os: [ubuntu-latest]
         runs-on: ${{ matrix.os }}
         steps:
