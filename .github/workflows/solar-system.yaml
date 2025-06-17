@@ -29,13 +29,10 @@ jobs:
               uses: actions/setup-node@v3
               with:
                 node-version: ${{ matrix.nodejs_version }}
-            - name: Cache npm Modules
-              uses: actions/cache@v4
+            - name: Install and Cache NPM Packages
+              uses: ./.github/workflows/actions/npm-action
               with:
                 path: node_modules
-                key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-            - name: Install Dependencies
-              run: npm install
             - name: Unit Testing
               id: unit-testing-step
               run: npm test
@@ -60,13 +57,10 @@ jobs:
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
-            - name: Cache npm Modules
-              uses: actions/cache@v4
+            - name: Install and Cache NPM Packages
+              uses: ./.github/workflows/actions/npm-action
               with:
                 path: node_modules
-                key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-            - name: Install Dependencies
-              run: npm install
             - name: Check Code Coverage
               continue-on-error: true
               run: npm run coverage

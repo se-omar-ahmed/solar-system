@@ -1,0 +1,21 @@
+name: 'Setup NodeJs and Cache'
+description: 'Installing and caching NPM packages'
+inputs:
+    path:
+        description: 'Path to cache'
+        required: true
+    cache-key:
+        description: 'Cache key'
+        required: false
+        default: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+runs:
+    using: 'composite'
+    steps:
+        - name: Cache npm Modules
+          uses: actions/cache@v4
+          with:
+            path: ${{ inputs.path }}
+            key: ${{ inputs.cache-key }}
+        - name: Install Dependencies
+          run: npm install
+          shell: bash
