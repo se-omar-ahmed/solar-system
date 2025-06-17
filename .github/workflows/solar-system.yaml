@@ -103,16 +103,22 @@ jobs:
           uses: linode/action-linode-cli@v1.1.0
           with:
             token: ${{ secrets.LINODE_TOKEN }}
-        - name: Install boto3
-          run: pip3 install boto3
+        - name: Install s3cmd
+          run: pip3 install s3cmd
         - name: Upload Reports
           env:
-            LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
-            LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
-            LINODE_OBJ_CLUSTER: 'ap-south-1'
+            LINODE_OBJ_ACCESS_KEY: ${{ secrets.LINODE_OBJ_ACCESS_KEY }}
+            LINODE_OBJ_SECRET_KEY: ${{ secrets.LINODE_OBJ_SECRET_KEY }}
+            LINODE_OBJ_HOST: 'ap-south-1.linodeobjects.com'
+            LINODE_OBJ_HOST_BUCKET: '%(bucket)s.ap-south-1.linodeobjects.com'
+            LINODE_OBJ_BUCKET_NAME: 'solar-system-reports'
           run: |
-            pwd
-            linode-cli obj --cluster ${{ env.LINODE_OBJ_CLUSTER }} put --acl-public ./reports-${{ github.sha }}/test-results.xml solar-system-reports/
+            s3cmd \
+            --access_key="${{ env.LINODE_OBJ_ACCESS_KEY }}" \
+            --secret_key="${{ env.LINODE_OBJ_SECRET_KEY }}" \
+            --host="${{ env.LINODE_OBJ_HOST }}" \
+            --host-bucket="${{ env.LINODE_OBJ_HOST_BUCKET}}" \
+            put --recursive reports-${{ github.sha }}/ s3://${{ env.LINODE_OBJ_BUCKET_NAME }}/reports-${{ github.sha }}/
     build-push-image:
       name: Build & Push to GHCR
       needs: [unit-testing, code-coverage]
