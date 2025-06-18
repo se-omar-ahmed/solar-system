@@ -1,0 +1,213 @@
+name: Solar System Workflow
+on:
+    workflow_dispatch: 
+    push:
+        branches: 
+            - main
+            - 'feature/*'
+env:
+  MONGO_URI: 'mongodb://localhost:27017/superData'
+  MONGO_USERNAME: ${{ vars.MONGODB_SERVICE_USERNAME }}
+  MONGO_PASSWORD: ${{ secrets.MONGODB_SERVICE_PASSWORD }}
+jobs:
+    unit-testing:
+        name: Unit Testing
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            ports:
+              - 27017:27017
+        strategy:
+          matrix:
+            nodejs_version: [18]
+            os: [ubuntu-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - name: Setup NodeJs (v${{ matrix.nodejs_version }})
+              uses: actions/setup-node@v3
+              with:
+                node-version: ${{ matrix.nodejs_version }}
+            - name: Install and Cache NPM Packages
+              uses: ./.github/workflows/actions/install-cache-npm
+              with:
+                path: node_modules
+            - name: Unit Testing
+              id: unit-testing-step
+              run: npm test
+            - name: Archive Test Result
+              if: always()
+              uses: actions/upload-artifact@v4.6.2
+              with:
+                name: mocha-test-result
+                path: test-results.xml
+    code-coverage:
+        name: Code Coverage
+        runs-on: ubuntu-latest
+        env:
+          MONGO_URI: 'mongodb://mongodb:27017/superData'
+        container:
+          image: node:18
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            options:
+              --name mongodb
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+            - name: Install and Cache NPM Packages
+              uses: ./.github/workflows/actions/install-cache-npm
+              with:
+                path: node_modules
+            - name: Check Code Coverage
+              continue-on-error: true
+              run: npm run coverage
+            - name: Archive Test Result
+              uses: actions/upload-artifact@v4.6.2
+              with:
+                name: code-coverage-result
+                path: coverage
+                retention-days: 5
+    upload-reports-to-s3:
+      name: Upload Reports to Linode's S3
+      needs: [unit-testing, code-coverage]
+      runs-on: ubuntu-latest
+      continue-on-error: true
+      steps:
+        - name: Download Mocha Test Artifact
+          uses: actions/download-artifact@v4.3.0
+          with:
+            name: mocha-test-result
+        - name: Download Code Coverage Artifact
+          uses: actions/download-artifact@v4.3.0
+          with:
+            name: code-coverage-result
+        - name: Combine Results in One Folder
+          run: |
+            mkdir reports-${{ github.sha }}
+            mv cobertura-coverage.xml reports-${{ github.sha }}
+            mv test-results.xml reports-${{ github.sha }}
+        - name: Install s3cmd
+          run: pip3 install s3cmd
+        - name: Upload Reports
+          env:
+            LINODE_OBJ_ACCESS_KEY: ${{ secrets.LINODE_OBJ_ACCESS_KEY }}
+            LINODE_OBJ_SECRET_KEY: ${{ secrets.LINODE_OBJ_SECRET_KEY }}
+            LINODE_OBJ_HOST: 'ap-south-1.linodeobjects.com'
+            LINODE_OBJ_HOST_BUCKET: '%(bucket)s.ap-south-1.linodeobjects.com'
+            LINODE_OBJ_BUCKET_NAME: 'solar-system-reports'
+          run: |
+            s3cmd \
+            --access_key="${{ env.LINODE_OBJ_ACCESS_KEY }}" \
+            --secret_key="${{ env.LINODE_OBJ_SECRET_KEY }}" \
+            --host="${{ env.LINODE_OBJ_HOST }}" \
+            --host-bucket="${{ env.LINODE_OBJ_HOST_BUCKET }}" \
+            put --recursive reports-${{ github.sha }}/ s3://${{ env.LINODE_OBJ_BUCKET_NAME }}/reports-${{ github.sha }}/
+    build-push-image:
+      name: Build & Push to GHCR
+      needs: [unit-testing, code-coverage]
+      runs-on: ubuntu-latest
+      permissions: 
+        packages: write
+      env:
+        MONGO_URI: 'mongodb://mongodb:27017/superData'
+      services:
+        mongodb:
+          image: siddharth67/mongo-db:non-prod
+          options:
+            --name mongodb
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Build Image
+          uses: docker/build-push-action@v4
+          with:
+            context: .
+            push: false
+            tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+        - name: Fetch Github Docker Network
+          run: echo "GITHUB_NETWORK=$(docker network ls --filter name=github --format "{{.Name}}")" >> $GITHUB_ENV
+        - name: Run Image
+          run: |
+            docker run --name solar-system-app -d \
+              --network ${{ env.GITHUB_NETWORK }} \
+              -p 3000:3000 \
+              -e MONGO_URI=${{ env.MONGO_URI }} \
+              -e MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
+              -e MONGO_PASSWORD=${{ env.MONGO_PASSWORD }} \
+              ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+        - name: Test Image
+          run: |
+            echo 'Testing image URL using wget...'
+            wget -qO - localhost:3000/live | grep live
+            wget -qO - --header="Content-Type: application/json" --post-data='{"id":"2"}' localhost:3000/planet | grep -i venus
+        - name: Stop Image
+          run: docker stop solar-system-app
+        - name: Login to GHCR
+          uses: docker/login-action@v3.4.0
+          with:
+            registry: ghcr.io
+            username: ${{ github.repository_owner }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        - name: Push Image to GHCR
+          uses: docker/build-push-action@v4
+          with:
+            context: .
+            push: true
+            tags: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+    deploy-to-dev:
+      if: contains(github.ref, 'feature/')
+      needs: [build-push-image]
+      name: Deploy to Linode's dev
+      uses: ./.github/workflows/deploy.yaml
+      with:
+        environment: linode_dev
+        manifests_path: kubernetes/dev
+        kubectl_version: 'v1.32.0'
+      secrets:
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
+    dev-integration-testing:
+      name: dev Integration Testing
+      needs: deploy-to-dev
+      uses: ./.github/workflows/integeration-testing.yaml
+      with:
+        ingress_url: ${{ needs.deploy-to-dev.outputs.ingress_url }}
+    deploy-to-prod:
+      if: github.ref == 'refs/heads/main'
+      needs: build-push-image
+      name: Deploy to Linode's prod
+      uses: ./.github/workflows/deploy.yaml
+      with:
+        environment: linode_prod
+        manifests_path: kubernetes/prod
+        kubectl_version: 'v1.32.0'
+      secrets:
+        kubeconfig: ${{ secrets.LINODE_KUBECONFIG }}
+        mongodb_password: ${{ secrets.MONGODB_PASSWORD }}
+    prod-integration-testing:
+      name: prod Integration Testing
+      needs: deploy-to-prod
+      uses: ./.github/workflows/integeration-testing.yaml
+      with:
+        ingress_url: ${{ needs.deploy-to-prod.outputs.ingress_url }}
+    send-slack-msg:
+      if: always()
+      name: Send Message to Slack
+      needs: [dev-integration-testing, prod-integration-testing]
+      continue-on-error: true
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Slack Notification
+          uses: rtCamp/action-slack-notify@v2.3.3
+          env:
+            SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+            SLACK_CHANNEL: deployments
+            SLACK_COLOR: ${{ job.status }}
+            SLACK_MESSAGE: "':hammer_and_wrench:' Triggered by ${{ github.actor }}"
+            SLACK_TITLE: Information
+

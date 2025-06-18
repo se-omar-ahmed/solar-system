@@ -1,0 +1,17 @@
+on:
+    pull_request:
+        types:
+            - opened
+jobs:
+    test-action:
+        runs-on: ubuntu-latest
+        permissions: 
+            issues: write
+            pull-requests: write
+        steps:
+            - name: Post PR Comment
+              uses: se-omar-ahmed/pr-comment-action@main
+              with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                giphy_api_key: ${{ secrets.GIPHY_API_KEY }}
+            

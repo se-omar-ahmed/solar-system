@@ -1,0 +1,21 @@
+name: Integeration Testing
+on:
+    workflow_call:
+        inputs:
+          ingress_url:
+            required: true
+            type: string
+    
+jobs:
+    test:
+      name: Integration Testing
+      runs-on: ubuntu-latest
+      steps:
+        - name: Test URL Output using curl and jq
+          env:
+            INGRESS_URL: ${{ inputs.ingress_url }}
+          run: |
+            echo $INGRESS_URL
+            echo "-------------------------------------------"
+            curl https:/$INGRESS_URL/live -s -k | jq -r .status | grep -i live
+            wget -qO - --header="Content-Type: application/json" --post-data='{"id":"2"}' --no-check-certificate https://$INGRESS_URL/planet | grep -i venus

@@ -1,0 +1,78 @@
+name: Deploy to k8s
+on:
+    workflow_call:
+      inputs:
+        environment:
+          required: true
+          type: string
+        manifests_path:
+          required: true
+          type: string
+        kubectl_version:
+          required: true
+          type: string
+      secrets:
+        kubeconfig:
+          required: true
+        mongodb_password:
+          required: true
+      outputs:
+        ingress_url: 
+          value: ${{ jobs.deploy.outputs.ingress_url }}
+
+jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      environment:
+        name: ${{ inputs.environment }}
+        url: https://${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      outputs:
+        ingress_url: ${{ steps.fetch-ingress-url.outputs.INGRESS_URL }}
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+          with:
+            version: ${{ inputs.kubectl_version }}
+        - name: Setup kubeconfig
+          uses: azure/k8s-set-context@v4.0.1
+          with:
+            method: kubeconfig
+            kubeconfig: ${{ secrets.kubeconfig }}
+        - name: Fetch Cluster Details
+          run: |
+            kubectl version
+            echo '-------------------------------'
+            kubectl -n ${{ vars.NAMESPACE }} get pods
+        - name: Fetch and Save Ingress IP as a GitHub Variable
+          run: |
+            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+        - name: Replace Tokens in Manifest Files
+          uses: cschleiden/replace-tokens@v1.3
+          with:
+            files: '["${{ inputs.manifests_path }}/*.yaml"]'
+          env:
+            NAMESPACE: ${{ vars.NAMESPACE }}
+            REPLICAS: ${{ vars.REPLICAS }}
+            IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+        - name: Print Manifest Files
+          run: |
+            cat ${{ inputs.manifests_path }}/*.yaml
+        - name: Create MongoDB Secret
+          run: |
+              kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+              --from-literal=MONGO_URI=${{ vars.MONGODB_URI }} \
+              --from-literal=MONGO_USERNAME=${{ vars.MONGODB_USERNAME }} \
+              --from-literal=MONGO_PASSWORD=${{ secrets.mongodb_password }} \
+              --save-config \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+        - name: Apply Manifests
+          run: |
+              kubectl apply -f ${{ inputs.manifests_path }}
+        - name: Fetch Ingress URL
+          id: fetch-ingress-url
+          run: |
+            echo "INGRESS_URL=$(kubectl -n ${{ vars.NAMESPACE }} get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> "$GITHUB_OUTPUT"
